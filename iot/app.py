@@ -15,8 +15,8 @@ from utils import _dict
 
 
 logging.basicConfig(level=logging.DEBUG,
-                format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
-                datefmt='%a, %d %b %Y %H:%M:%S')
+					format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
+					datefmt='%a, %d %b %Y %H:%M:%S')
 
 config = ConfigParser()
 config.read('../config.ini')
@@ -46,6 +46,7 @@ def create_tsdb_worker(db):
 		worker.start()
 		tsdb_worker[db] = worker
 	return worker
+
 
 def create_tsdb_client(db):
 	host = config.get('influxdb', 'host', fallback='127.0.0.1')
@@ -83,6 +84,8 @@ def watch_redis_cloud():
 		worker = create_statistics_worker(value.company)
 		tsdb = create_tsdb_worker(value.database)
 		# worker.create_dss_task(tsdb, redis_sts, api_srv, val.company, val.auth_code)
+		worker.create_dts_task(redis_statistics, api_srv, val.company, val.auth_code)
+		worker.create_dets_task(tsdb, create_tsdb_client(value.database), api_srv, val.company, val.auth_code)
 		worker.create_des_task(create_tsdb_client(value.database), redis_statistics, api_srv, val.company, val.auth_code)
 		worker.create_dscs_task(tsdb, create_tsdb_client(value.database), api_srv, val.company, val.auth_code)
 

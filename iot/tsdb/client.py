@@ -1,8 +1,7 @@
 
 from __future__ import unicode_literals
 import influxdb
-import os
-import time
+import json
 from influxdb.exceptions import InfluxDBClientError
 import logging
 import tzlocal
@@ -88,6 +87,26 @@ class Client:
 			value = []
 			for p in val.get_points('iot_device_event'):
 				value.append(p)
+
+			return value
+		except Exception as ex:
+			return []
+
+	def query_event_type_count(self, iot, startime, endtime):
+		time_cond = 'time >= \'' + startime + '\' AND time < \'' + endtime +'\''
+		dev_cond = '"iot"=\'' + iot + '\''
+		query = 'select event from iot_device_event where ' + dev_cond + ' AND ' + time_cond
+		query = query + ' tz(\'' + tzlocal.get_localzone().zone + '\')'
+
+		try:
+			val = self._client.query(query)
+
+			value = {}
+			for p in val.get_points('iot_device_event'):
+				data = json.loads(p.get('event'))
+				v = value.get(data.get('type')) or 0
+				v = v + 1
+				value[data.get('type')] = v
 
 			return value
 		except Exception as ex:

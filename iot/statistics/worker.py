@@ -56,16 +56,25 @@ class Worker(threading.Thread):
 		'''
 		Create Device Status Statistics Task
 		'''
-		self.add(DeviceStatusStatistics(*args, **kwargs)
-				 )
-	def create_dscs_task(self, *args, **kwargs):
-		'''
-		Create Device Status Statistics Task
-		'''
-		self.add(DeviceStatusChangeStatistics(*args, **kwargs))
+		self.add(DeviceStatusStatistics(*args, **kwargs))
 
 	def create_des_task(self, *args, **kwargs):
 		self.add(DeviceEventStatistics(*args, **kwargs))
+
+	def create_dets_task(self, *args, **kwargs):
+		self.add(DeviceEventTypeStatistics(*args, **kwargs))
+
+	def create_dts_task(self, *args, **kwargs):
+		'''
+		Create Device Status Change Statistics Task
+		'''
+		self.add(DeviceTypeStatistics(*args, **kwargs))
+
+	def create_dscs_task(self, *args, **kwargs):
+		'''
+		Create Device Status Change Statistics Task
+		'''
+		self.add(DeviceStatusChangeStatistics(*args, **kwargs))
 
 	def device_event(self, *args, **kwargs):
 		self.add(DeviceEvent(*args, **kwargs))
@@ -117,6 +126,7 @@ DATE_FORMAT = "%Y-%m-%d"
 TIME_FORMAT = "%H:%M:%S.%f"
 DATETIME_FORMAT = DATE_FORMAT + " " + TIME_FORMAT
 
+
 class DeviceEventStatistics(TaskBase):
 	def __init__(self, tsdb_client, redis_statistics, api_srv, owner, auth_code):
 		self.tsdb_client = tsdb_client
@@ -159,6 +169,76 @@ class DeviceEventStatistics(TaskBase):
 						total = total + (v.get('count') or 0)
 					data['total'] = total
 				self.redis_statistics.hmset('event_count.' + dev, data)
+
+
+class DeviceEventTypeStatistics(TaskBase):
+	def __init__(self, tsdb_worker, tsdb_client, api_srv, owner, auth_code):
+		self.tsdb_worker = tsdb_worker
+		self.tsdb_client = tsdb_client
+		self.api_srv = api_srv
+		self.owner = owner
+		self.auth_code = auth_code
+		self.time = time.time()
+
+	def run(self):
+		now = int(self.time / (60 * 5)) * 60 * 5 # five minutes
+		start_time = datetime.datetime.fromtimestamp(now - ( 5 * 60)).strftime(DATETIME_FORMAT)
+		end_time = datetime.datetime.fromtimestamp(now).strftime(DATETIME_FORMAT)
+		session = self.create_get_session(self.auth_code)
+
+		r = session.get(self.api_srv + ".list_devices")
+		if r.status_code != 200:
+			logging.warning(r.text)
+			return
+		msg = _dict(r.json())
+		if not msg or not msg.message.get('company_devices'):
+			logging.warning('Result is not json!!')
+			return
+
+		company_devices = msg.message.get('company_devices')
+		for group in company_devices:
+			group = _dict(group)
+			for dev in group.devices:
+				val = self.tsdb_client.query_event_type_count(dev, start_time, end_time)
+				if val:
+					self.tsdb_worker.append_statistics('device_event_type_statistics', self.owner, now, val)
+
+
+class DeviceTypeStatistics(TaskBase):
+	def __init__(self, redis_statistics, api_srv, owner, auth_code):
+		self.redis_statistics = redis_statistics
+		self.api_srv = api_srv
+		self.owner = owner
+		self.auth_code = auth_code
+		self.time = time.time()
+
+	def run(self):
+		now = int(self.time / (60 * 5)) * 60 * 5 # five minutes
+		session = self.create_get_session(self.auth_code)
+
+		r = session.get(self.api_srv + ".list_devices")
+		if r.status_code != 200:
+			logging.warning(r.text)
+			return
+		msg = _dict(r.json())
+		if not msg or not msg.message.get('company_devices'):
+			logging.warning('Result is not json!!')
+			return
+
+		company_devices = msg.message.get('company_devices')
+
+		q102_count = 0
+		vm_count = 0
+
+		for group in company_devices:
+			group = _dict(group)
+			for dev in group.devices:
+				if dev[1:7] == '2-30002-':
+					q102_count = q102_count + 1
+				else:
+					vm_count = vm_count + 1
+
+		self.redis_statistics.hmset('device_type.' + self.owner, {"Q02": q102_count, "VBOX": vm_count})
 
 
 class DeviceStatusChangeStatistics(TaskBase):
