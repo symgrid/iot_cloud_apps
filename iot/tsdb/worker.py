@@ -16,6 +16,7 @@ class Worker(threading.Thread):
 		self.data_queue = queue.Queue(10240)
 		self.task_queue = queue.Queue(1024)
 
+
 	def run(self):
 		dq = self.data_queue
 		tq = self.task_queue
@@ -58,6 +59,7 @@ class Worker(threading.Thread):
 
 	def append_event(self, device, iot, timestamp, event, quality):
 		self.data_queue.put({
+			'event_data': True,
 			"name": "iot_device_event",
 			"property": "event",
 			"device": device,
@@ -67,4 +69,13 @@ class Worker(threading.Thread):
 			"quality": quality,
 			"level": event.get('level'),
 			"type": event.get('type'),
+		})
+
+	def append_statistics(self, name, owner, timestamp, fields):
+		self.data_queue.put({
+			'statistics': True,
+			"name": name,
+			"owner": owner,
+			"timestamp": timestamp,
+			"fields": fields,
 		})
