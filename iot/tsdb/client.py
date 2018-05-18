@@ -79,7 +79,7 @@ class Client:
 		time_cond = 'time >= \'' + startime + '\' AND time < \'' + endtime +'\''
 		dev_cond = '"iot"=\'' + iot + '\' AND "device"=\'' + iot + '\''
 		group_by = 'GROUP BY time(' + group_by + ') FILL(null)'
-		query = 'select count(event) from iot_device_event where ' + dev_cond + ' AND ' + time_cond + ' ' + group_by
+		query = 'select online from iot_device_event where ' + dev_cond + ' AND ' + time_cond + ' ' + group_by
 		query = query + ' tz(\'' + tzlocal.get_localzone().zone + '\')'
 
 		try:
@@ -91,4 +91,21 @@ class Client:
 
 			return value
 		except Exception as ex:
-			return 0
+			return []
+
+	def query_device_status(self, iot, startime, endtime):
+		time_cond = 'time >= \'' + startime + '\' AND time < \'' + endtime +'\''
+		dev_cond = '"iot"=\'' + iot + '\' AND "device"=\'' + iot + '\''
+		query = 'select online from device_status where ' + dev_cond + ' AND ' + time_cond
+		query = query + ' tz(\'' + tzlocal.get_localzone().zone + '\')'
+
+		try:
+			val = self._client.query(query)
+
+			value = []
+			for p in val.get_points('device_status'):
+				value.append(p)
+
+			return value
+		except Exception as ex:
+			return []

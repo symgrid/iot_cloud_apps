@@ -56,7 +56,13 @@ class Worker(threading.Thread):
 		'''
 		Create Device Status Statistics Task
 		'''
-		self.add(DeviceStatusStatistics(*args, **kwargs))
+		self.add(DeviceStatusStatistics(*args, **kwargs)
+				 )
+	def create_dscs_task(self, *args, **kwargs):
+		'''
+		Create Device Status Statistics Task
+		'''
+		self.add(DeviceStatusChangeStatistics(*args, **kwargs))
 
 	def create_des_task(self, *args, **kwargs):
 		self.add(DeviceEventStatistics(*args, **kwargs))
@@ -70,10 +76,12 @@ class DeviceStatusStatistics(TaskBase):
 		self.tsdb_worker = tsdb_worker
 		self.redis_sts = redis_sts
 		self.api_srv = api_srv
-		self.owner = owner,
+		self.owner = owner
 		self.auth_code = auth_code
+		self.time = time.time()
 
 	def run(self):
+		now = int(self.time / (60 * 5)) * 60 * 5 # five minutes
 		session = self.create_get_session(self.auth_code)
 
 		r = session.get(self.api_srv + ".list_devices")
@@ -98,7 +106,7 @@ class DeviceStatusStatistics(TaskBase):
 						online_count = online_count + 1
 					else:
 						offline_count = offline_count + 1
-		self.tsdb_worker.append_statistics('device_status_statistics', self.owner, time.time(), {
+		self.tsdb_worker.append_statistics('device_status_statistics', self.owner, now, {
 			'online': online_count,
 			'offline': offline_count
 		})
@@ -114,7 +122,7 @@ class DeviceEventStatistics(TaskBase):
 		self.tsdb_client = tsdb_client
 		self.redis_statistics = redis_statistics
 		self.api_srv = api_srv
-		self.owner = owner,
+		self.owner = owner
 		self.auth_code = auth_code
 		self.time = time.time()
 
@@ -139,7 +147,63 @@ class DeviceEventStatistics(TaskBase):
 			group = _dict(group)
 			for dev in group.devices:
 				val = self.tsdb_client.query_event_count(dev, start_time, end_time, '1d')
-				self.redis_statistics.set(dev, json.dumps(val))
+				data = {
+					'points': val,
+					'today': 0,
+					'total': 0,
+				}
+				if len(val) > 0:
+					data['today'] = val[len(val) - 1].get('count') or 0
+					total = 0
+					for v in val:
+						total = total + (v.get('count') or 0)
+					data['total'] = total
+				self.redis_statistics.hmset('event_count.' + dev, data)
+
+
+class DeviceStatusChangeStatistics(TaskBase):
+	def __init__(self, tsdb_worker, tsdb_client, api_srv, owner, auth_code):
+		self.tsdb_worker = tsdb_worker
+		self.tsdb_client = tsdb_client
+		self.api_srv = api_srv
+		self.owner = owner
+		self.auth_code = auth_code
+		self.time = time.time()
+
+	def run(self):
+		now = int(self.time / (60 * 5)) * 60 * 5 # five minutes
+		start_time = datetime.datetime.fromtimestamp(now - ( 5 * 60)).strftime(DATETIME_FORMAT)
+		end_time = datetime.datetime.fromtimestamp(now).strftime(DATETIME_FORMAT)
+		session = self.create_get_session(self.auth_code)
+
+		r = session.get(self.api_srv + ".list_devices")
+		if r.status_code != 200:
+			logging.warning(r.text)
+			return
+		msg = _dict(r.json())
+		if not msg or not msg.message.get('company_devices'):
+			logging.warning('Result is not json!!')
+			return
+
+		company_devices = msg.message.get('company_devices')
+
+		online_count = 0
+		offline_count = 0
+
+		for group in company_devices:
+			group = _dict(group)
+			for dev in group.devices:
+				val = self.tsdb_client.query_device_status(dev, start_time, end_time)
+				for v in val:
+					if v.get('online') is True:
+						online_count = online_count + 1
+					else:
+						offline_count = offline_count + 1
+
+		self.tsdb_worker.append_statistics('device_status_statistics', self.owner, now, {
+			'online': online_count,
+			'offline': offline_count
+		})
 
 
 class DeviceEvent(TaskBase):
