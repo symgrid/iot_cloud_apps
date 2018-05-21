@@ -78,7 +78,7 @@ class Client:
 		time_cond = 'time >= \'' + startime + '\' AND time < \'' + endtime +'\''
 		dev_cond = '"iot"=\'' + iot + '\' AND "device"=\'' + iot + '\''
 		group_by = 'GROUP BY time(' + group_by + ') FILL(null)'
-		query = 'select online from iot_device_event where ' + dev_cond + ' AND ' + time_cond + ' ' + group_by
+		query = 'select count("event") from iot_device_event where ' + dev_cond + ' AND ' + time_cond + ' ' + group_by
 		query = query + ' tz(\'' + tzlocal.get_localzone().zone + '\')'
 
 		try:

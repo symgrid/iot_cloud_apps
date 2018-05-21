@@ -137,7 +137,7 @@ class DeviceEventStatistics(TaskBase):
 		self.time = time.time()
 
 	def run(self):
-		start_time = (int(self.time / (60 * 60 * 24)) * 60 * 60 * 24) - ( 30 * 24 * 60 * 60)
+		start_time = (int(self.time / (60 * 60 * 24)) * 60 * 60 * 24) - ( 7 * 24 * 60 * 60)
 		start_time = datetime.date.fromtimestamp(start_time).strftime(DATETIME_FORMAT)
 		# end_time = datetime.datetime.fromtimestamp(int(self.time / (60 * 5)) * 60 * 5).strftime(DATETIME_FORMAT)
 		end_time = datetime.datetime.fromtimestamp(self.time).strftime(DATETIME_FORMAT)
@@ -238,7 +238,7 @@ class DeviceTypeStatistics(TaskBase):
 				else:
 					vm_count = vm_count + 1
 
-		self.redis_statistics.hmset('device_type.' + self.owner, {"Q02": q102_count, "VBOX": vm_count})
+		self.redis_statistics.hmset('device_type.' + self.owner, {"Q102": q102_count, "VBOX": vm_count})
 
 
 class DeviceStatusChangeStatistics(TaskBase):
@@ -279,7 +279,7 @@ class DeviceStatusChangeStatistics(TaskBase):
 						online_count = online_count + 1
 					else:
 						offline_count = offline_count + 1
-
+		# TODO: using end time or start time
 		self.tsdb_worker.append_statistics('device_status_statistics', self.owner, now, {
 			'online': online_count,
 			'offline': offline_count

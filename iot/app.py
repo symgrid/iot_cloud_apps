@@ -42,7 +42,7 @@ def create_tsdb_worker(db):
 		port = config.getint('influxdb', 'port', fallback=8086)
 		username = config.get('influxdb', 'username', fallback='root')
 		password = config.get('influxdb', 'password', fallback='root')
-		worker = TSDBWorker(database=db, host=host, port=port, username=username, password=password)
+		worker = TSDBWorker(database=db + '.statistics', host=host, port=port, username=username, password=password)
 		worker.start()
 		tsdb_worker[db] = worker
 	return worker
