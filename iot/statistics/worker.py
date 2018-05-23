@@ -233,7 +233,7 @@ class DeviceTypeStatistics(TaskBase):
 		for group in company_devices:
 			group = _dict(group)
 			for dev in group.devices:
-				if dev[1:7] == '2-30002-':
+				if dev[0:8] == '2-30002-':
 					q102_count = q102_count + 1
 				else:
 					vm_count = vm_count + 1
