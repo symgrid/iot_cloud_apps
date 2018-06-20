@@ -80,14 +80,14 @@ def watch_redis_cloud():
 		if value.enable is not None and (value.enable is True or int(value.enable) != 0):
 			cloud_statistics.append(value)
 
-	for val in cloud_statistics:
+	for value in cloud_statistics:
 		worker = create_statistics_worker(value.company)
 		tsdb = create_tsdb_worker(value.database)
 		# worker.create_dss_task(tsdb, redis_sts, api_srv, val.company, val.auth_code)
-		worker.create_dts_task(redis_statistics, api_srv, val.company, val.auth_code)
-		worker.create_dets_task(tsdb, create_tsdb_client(value.database), api_srv, val.company, val.auth_code)
-		worker.create_des_task(create_tsdb_client(value.database), redis_statistics, api_srv, val.company, val.auth_code)
-		worker.create_dscs_task(tsdb, create_tsdb_client(value.database), api_srv, val.company, val.auth_code)
+		worker.create_dts_task(redis_statistics, api_srv, value.company, value.auth_code)
+		worker.create_dets_task(tsdb, create_tsdb_client(value.database), api_srv, value.company, value.auth_code)
+		worker.create_des_task(create_tsdb_client(value.database), redis_statistics, api_srv, value.company, value.auth_code)
+		worker.create_dscs_task(tsdb, create_tsdb_client(value.database), api_srv, value.company, value.auth_code)
 
 
 watch_redis_cloud()
