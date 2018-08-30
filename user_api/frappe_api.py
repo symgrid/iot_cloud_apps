@@ -11,7 +11,7 @@ class FrappeApi():
 
 	def create_get_request(self, auth_code):
 		session = requests.session()
-		session.headers['HDB-AuthorizationCode'] = auth_code
+		session.headers['AuthorizationCode'] = auth_code
 		session.headers['Accept'] = 'application/json'
 		return session
 
@@ -28,7 +28,7 @@ class FrappeApi():
 		r = session.get(self.api_srv + ".get_user")
 		if r.status_code != 200:
 			logging.error(r.text)
-			raise r.status_code
+			return None
 		msg = r.json()
 		# logging.debug('%s\t%s\t%s', str(time.time()), msg)
 		return msg.get("message")
@@ -38,7 +38,7 @@ class FrappeApi():
 		r = session.get(self.api_srv + ".get_device?sn=" + device_sn)
 		if r.status_code != 200:
 			logging.error(r.text)
-			raise r.status_code
+			return None
 		msg = r.json()
 		# logging.debug('%s\t%s\t%s', str(time.time()), msg)
 		return msg.get("message")

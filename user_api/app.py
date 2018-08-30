@@ -42,6 +42,7 @@ def remove_sub(client, device=None):
 		for d in sub_array:
 			if client['handler'] == d['handler']:
 				sub_array.remove(d)
+		device_sub_map[device] = sub_array
 		return
 
 	for device in device_sub_map:
@@ -49,6 +50,7 @@ def remove_sub(client, device=None):
 		for d in sub_array:
 			if client['handler'] == d['handler']:
 				sub_array.remove(d)
+		device_sub_map[device] = sub_array
 
 
 rtdata = RTData(redis_cfg, redis_rtdb)
@@ -69,12 +71,12 @@ def client_left(client, server):
 	remove_sub(client)
 
 	for c in client_auth_map:
-		if c["handler"] == client["handler"]:
-			client_auth_map.remove(c)
+		if c == client["handler"]:
+			client_auth_map[c] = None
 
 
 def valid_client(client):
-	c = client_auth_map.get(client)
+	c = client_auth_map.get(client['handler'])
 	if not c:
 		raise Exception("NOT LOGIN")
 	return c.get("auth_code")
@@ -102,9 +104,10 @@ def message_received(client, server, message):
 			"code": code,
 			"data": got_user
 		}))
-		client_auth_map[client] = {
+		client_auth_map[client["handler"]] = {
 			"user": got_user,
-			"auth_code": auth_code
+			"auth_code": auth_code,
+			"client": client
 		}
 		return
 
@@ -125,7 +128,13 @@ def message_received(client, server, message):
 	if code == 'device_data':
 		device = msg['data']
 		if not frappe_api.get_device(auth_code, device):
-			raise Exception("Not permitted to operation on this device")
+			logging.warning("Not permitted to operation on this device")
+			server.send_message(client, json.dumps({
+				"id": id,
+				"code": code,
+				"data": 0,
+			}))
+			return
 
 		data = rtdata.query(device)
 		server.send_message(client, json.dumps({
@@ -138,7 +147,13 @@ def message_received(client, server, message):
 	if code == 'device_sub':
 		device = msg['data']
 		if not frappe_api.get_device(auth_code, device):
-			raise Exception("Not permitted to operation on this device")
+			logging.warning("Not permitted to operation on this device")
+			server.send_message(client, json.dumps({
+				"id": id,
+				"code": code,
+				"data": 0,
+			}))
+			return
 
 		data = rtdata.query(device)
 		server.send_message(client, json.dumps({
@@ -149,6 +164,7 @@ def message_received(client, server, message):
 		server.send_message(client, json.dumps({
 			"id": id,
 			"code": code,
+			"data": 1,
 		}))
 		add_sub(client, device)
 		return
@@ -164,7 +180,7 @@ def message_received(client, server, message):
 
 
 server.set_fn_new_client(new_client)
-server.set_fn_client_left(new_client)
+server.set_fn_client_left(client_left)
 server.set_fn_message_received(message_received)
 
 sub.start()
