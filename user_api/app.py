@@ -48,14 +48,14 @@ def new_client(client, server):
 
 def client_left(client, server):
 	sub.unsubscribe(client)
-
-	for c in client_auth_map:
-		if c == client["handler"]:
-			client_auth_map[c] = None
+	handler = client["handler"]
+	if client_auth_map.get(handler):
+		client_auth_map.pop(handler)
 
 
 def valid_client(client):
-	c = client_auth_map.get(client['handler'])
+	handler = client["handler"]
+	c = client_auth_map.get(handler)
 	if not c:
 		raise Exception("NOT LOGIN")
 	return c.get("auth_code")

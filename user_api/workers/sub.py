@@ -146,6 +146,7 @@ class SubClient:
 		self.ws_server = ws_server
 		self.device_sub_map = {}
 		self.id = 0
+		self.invalid_client = []
 
 	def subscribe(self, client, device):
 		sub_map = self.device_sub_map.get(device) or {}
@@ -158,18 +159,21 @@ class SubClient:
 			if not sub_map:
 				return
 
+			new_map = {}
 			for d in sub_map:
-				if client['handler'] == d:
-					sub_map[d] = None
-			self.device_sub_map[device] = sub_map
+				if client['handler'] != d:
+					new_map[d] = sub_map[d]
+			self.device_sub_map[device] = new_map
 			return
 
 		for device in self.device_sub_map:
 			sub_map = self.device_sub_map.get(device)
+			new_map = {}
 			for d in sub_map:
-				if client['handler'] == d:
-					sub_map[d] = None
-			self.device_sub_map[device] = sub_map
+				if client['handler'] != d:
+					new_map[d] = sub_map[d]
+			self.device_sub_map[device] = new_map
+			return
 
 	def start(self):
 		host = self.config.get('mqtt', 'host', fallback='127.0.0.1')
@@ -179,10 +183,24 @@ class SubClient:
 		mqttc.start()
 		self.mqttc = mqttc
 
+	def send_sub_message(self, client, msg):
+		try:
+			self.ws_server.send_message(client, json.dumps(msg))
+			self.id = self.id + 1
+		except Exception as ex:
+			logging.exception(ex)
+			self.invalid_client.append(client)
+
+	def clean_invalid_client(self):
+		for client in self.invalid_client:
+			self.unsubscribe(client)
+		self.invalid_client = []
+
 	def on_data(self, sn, input, data):
-		sub_array = self.device_sub_map.get(sn) or []
-		for client in sub_array:
-			self.ws_server.send_message(client, json.dumps({
+		sub_map = self.device_sub_map.get(sn) or {}
+		msg = None
+		for client in sub_map.values():
+			msg = msg or {
 				"id": self.id,
 				"code": 'data',
 				"data": {
@@ -190,44 +208,51 @@ class SubClient:
 					"input": input,
 					"value": data
 				}
-			}))
-			self.id = self.id + 1
+			}
+			self.send_sub_message(client, msg)
+			self.clean_invalid_client()
 
 	def on_device(self, sn, info):
-		sub_array = self.device_sub_map.get(sn) or []
-		for client in sub_array:
-			self.ws_server.send_message(client, json.dumps({
+		sub_map = self.device_sub_map.get(sn) or {}
+		msg = None
+		for client in sub_map.values():
+			msg = msg or {
 				"id": self.id,
 				"code": 'device',
 				"data": {
 					"device": sn,
 					"info": info
 				}
-			}))
-			self.id = self.id + 1
+			}
+			self.send_sub_message(client, msg)
+			self.clean_invalid_client()
 
 	def on_device_status(self, sn, status):
-		sub_array = self.device_sub_map.get(sn) or []
-		for client in sub_array:
-			self.ws_server.send_message(client, json.dumps({
+		sub_map = self.device_sub_map.get(sn) or {}
+		msg = None
+		for client in sub_map.values():
+			msg = msg or {
 				"id": self.id,
 				"code": 'device_status',
 				"data": {
 					"device": sn,
 					"status": status
 				}
-			}))
-			self.id = self.id + 1
+			}
+			self.send_sub_message(client, msg)
+			self.clean_invalid_client()
 
 	def on_device_event(self, sn, event):
-		sub_array = self.device_sub_map.get(sn) or []
-		for client in sub_array:
-			self.ws_server.send_message(client, json.dumps({
+		sub_map = self.device_sub_map.get(sn) or {}
+		msg = None
+		for client in sub_map.values():
+			msg = msg or {
 				"id": self.id,
 				"code": 'device_event',
 				"data": {
 					"device": sn,
 					"event": event
 				}
-			}))
-			self.id = self.id + 1
+			}
+			self.send_sub_message(client, msg)
+			self.clean_invalid_client()
