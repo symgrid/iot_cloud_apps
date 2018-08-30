@@ -160,7 +160,7 @@ class SubClient:
 		for client in sub_array:
 			self.ws_server.send_message(client, json.dumps({
 				"id": self.id,
-				"code": 'on_data',
+				"code": 'data',
 				"data": {
 					"device": sn,
 					"input": input,
@@ -174,7 +174,7 @@ class SubClient:
 		for client in sub_array:
 			self.ws_server.send_message(client, json.dumps({
 				"id": self.id,
-				"code": 'on_device',
+				"code": 'device',
 				"data": {
 					"device": sn,
 					"info": info
