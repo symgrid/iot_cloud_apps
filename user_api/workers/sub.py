@@ -141,11 +141,35 @@ class MQTTClient(threading.Thread):
 
 
 class SubClient:
-	def __init__(self, config, ws_server, device_sub_map):
+	def __init__(self, config, ws_server):
 		self.config = config
 		self.ws_server = ws_server
-		self.device_sub_map = device_sub_map
+		self.device_sub_map = {}
 		self.id = 0
+
+	def subscribe(self, client, device):
+		sub_map = self.device_sub_map.get(device) or {}
+		sub_map[client['handler']] = client
+		self.device_sub_map[device] = sub_map
+
+	def unsubscribe(self, client, device=None):
+		if device:
+			sub_map = self.device_sub_map.get(device)
+			if not sub_map:
+				return
+
+			for d in sub_map:
+				if client['handler'] == d:
+					sub_map[d] = None
+			self.device_sub_map[device] = sub_map
+			return
+
+		for device in self.device_sub_map:
+			sub_map = self.device_sub_map.get(device)
+			for d in sub_map:
+				if client['handler'] == d:
+					sub_map[d] = None
+			self.device_sub_map[device] = sub_map
 
 	def start(self):
 		host = self.config.get('mqtt', 'host', fallback='127.0.0.1')

@@ -5,7 +5,9 @@ import logging
 import json
 from configparser import ConfigParser
 from websocket_server import WebsocketServer
+
 from workers.sub import SubClient
+from workers.action import Worker as ActionWorker
 from rtdata import RTData
 from frappe_api import FrappeApi
 
@@ -26,38 +28,15 @@ redis_rel = redis.Redis.from_url(redis_srv + "/11", decode_responses=True) # dev
 redis_rtdb = redis.Redis.from_url(redis_srv+"/12", decode_responses=True) # device real-time data
 
 
-device_sub_map = {}
 client_auth_map = {}
 
-
-def add_sub(client, device):
-	sub_array = device_sub_map.get(device) or []
-	sub_array.append(client)
-	device_sub_map[device] = sub_array
-
-
-def remove_sub(client, device=None):
-	if device:
-		sub_array = device_sub_map.get(device)
-		for d in sub_array:
-			if client['handler'] == d['handler']:
-				sub_array.remove(d)
-		device_sub_map[device] = sub_array
-		return
-
-	for device in device_sub_map:
-		sub_array = device_sub_map.get(device)
-		for d in sub_array:
-			if client['handler'] == d['handler']:
-				sub_array.remove(d)
-		device_sub_map[device] = sub_array
 
 
 rtdata = RTData(redis_cfg, redis_rtdb)
 frappe_api = FrappeApi(config)
 server = WebsocketServer(port=17654, host='0.0.0.0', loglevel=logging.INFO)
-sub = SubClient(config, server, device_sub_map)
-
+sub = SubClient(config, server)
+action_worker = ActionWorker()
 
 def new_client(client, server):
 	server.send_message(client, json.dumps({
@@ -68,7 +47,7 @@ def new_client(client, server):
 
 
 def client_left(client, server):
-	remove_sub(client)
+	sub.unsubscribe(client)
 
 	for c in client_auth_map:
 		if c == client["handler"]:
@@ -166,17 +145,58 @@ def message_received(client, server, message):
 			"code": code,
 			"data": 1,
 		}))
-		add_sub(client, device)
+		sub.subscribe(client, device)
 		return
 
 	if code == 'device_unsub':
 		device = msg['data']
-		remove_sub(client, device)
+		sub.unsubscribe(client, device)
 		server.send_message(client, json.dumps({
 			"id": id,
 			"code": code
 		}))
 		return
+
+	if code == 'send_output':
+		data = msg['data']
+		device = data.get('device')
+		if not frappe_api.get_device(auth_code, device):
+			logging.warning("Not permitted to operation on this device")
+			server.send_message(client, json.dumps({
+				"id": id,
+				"code": code,
+				"data": 0,
+			}))
+			return
+		else:
+			action_worker.send_output(ws_client=client, ws_server=server, ws_id=id, auth_code=auth_code, frappe_api=frappe_api, data=data)
+			server.send_message(client, json.dumps({
+				"id": id,
+				"code": code,
+				"data": 1,
+			}))
+			return
+
+	if code == 'send_command':
+		data = msg['data']
+		device = data.get('device')
+		if not frappe_api.get_device(auth_code, device):
+			logging.warning("Not permitted to operation on this device")
+			server.send_message(client, json.dumps({
+				"id": id,
+				"code": code,
+				"data": 0,
+			}))
+			return
+		else:
+			action_worker.send_command(ws_client=client, ws_server=server, ws_id=id, auth_code=auth_code, frappe_api=frappe_api, data=data)
+			server.send_message(client, json.dumps({
+				"id": id,
+				"code": code,
+				"data": 1,
+			}))
+			return
+
 
 
 server.set_fn_new_client(new_client)
