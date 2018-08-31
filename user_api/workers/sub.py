@@ -216,7 +216,7 @@ class SubClient:
 				}
 			}
 			self.send_sub_message(client, msg)
-			self.clean_invalid_client()
+		self.clean_invalid_client()
 
 	def on_device(self, sn, info):
 		sub_map = self.device_sub_map.get(sn) or {}
@@ -231,7 +231,7 @@ class SubClient:
 				}
 			}
 			self.send_sub_message(client, msg)
-			self.clean_invalid_client()
+		self.clean_invalid_client()
 
 	def on_device_status(self, sn, status):
 		sub_map = self.device_sub_map.get(sn) or {}
@@ -246,7 +246,7 @@ class SubClient:
 				}
 			}
 			self.send_sub_message(client, msg)
-			self.clean_invalid_client()
+		self.clean_invalid_client()
 
 	def on_device_event(self, sn, event):
 		sub_map = self.device_sub_map.get(sn) or {}
@@ -261,4 +261,4 @@ class SubClient:
 				}
 			}
 			self.send_sub_message(client, msg)
-			self.clean_invalid_client()
+		self.clean_invalid_client()
