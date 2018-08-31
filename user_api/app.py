@@ -165,7 +165,10 @@ def message_received(client, server, message):
 			server.send_message(client, json.dumps({
 				"id": id,
 				"code": code,
-				"data": 0,
+				"data": {
+					"message": "Not permitted to operation on this device",
+					"result": False,
+				}
 			}))
 			return
 		else:
@@ -173,7 +176,10 @@ def message_received(client, server, message):
 			server.send_message(client, json.dumps({
 				"id": id,
 				"code": code,
-				"data": 1,
+				"data": {
+					"message": "Send output done!",
+					"result": True,
+				}
 			}))
 			return
 
@@ -185,7 +191,10 @@ def message_received(client, server, message):
 			server.send_message(client, json.dumps({
 				"id": id,
 				"code": code,
-				"data": 0,
+				"data": {
+					"message": "Not permitted to operation on this device",
+					"result": False,
+				}
 			}))
 			return
 		else:
@@ -193,7 +202,10 @@ def message_received(client, server, message):
 			server.send_message(client, json.dumps({
 				"id": id,
 				"code": code,
-				"data": 1,
+				"data": {
+					"message": "Send command done!",
+					"result": True,
+				},
 			}))
 			return
 
@@ -203,5 +215,6 @@ server.set_fn_new_client(new_client)
 server.set_fn_client_left(client_left)
 server.set_fn_message_received(message_received)
 
+action_worker.start()
 sub.start()
 server.run_forever()
