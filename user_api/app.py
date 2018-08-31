@@ -24,7 +24,6 @@ api_srv = config.get('iot', 'url', fallback='http://127.0.0.1:8000') + "/api/met
 
 redis_sts = redis.Redis.from_url(redis_srv + "/9", decode_responses=True) # device status (online or offline)
 redis_cfg = redis.Redis.from_url(redis_srv + "/10", decode_responses=True) # device defines
-redis_rel = redis.Redis.from_url(redis_srv + "/11", decode_responses=True) # device relationship
 redis_rtdb = redis.Redis.from_url(redis_srv+"/12", decode_responses=True) # device real-time data
 
 
@@ -106,7 +105,7 @@ def message_received(client, server, message):
 
 	if code == 'device_data':
 		device = msg['data']
-		if not frappe_api.get_device(auth_code, device):
+		if not frappe_api.access_device(auth_code, device):
 			logging.warning("Not permitted to operation on this device")
 			server.send_message(client, json.dumps({
 				"id": id,
@@ -125,7 +124,7 @@ def message_received(client, server, message):
 
 	if code == 'device_sub':
 		device = msg['data']
-		if not frappe_api.get_device(auth_code, device):
+		if not frappe_api.access_device(auth_code, device):
 			logging.warning("Not permitted to operation on this device")
 			server.send_message(client, json.dumps({
 				"id": id,
@@ -160,7 +159,7 @@ def message_received(client, server, message):
 	if code == 'send_output':
 		data = msg['data']
 		device = data.get('device')
-		if not frappe_api.get_device(auth_code, device):
+		if not frappe_api.access_device(auth_code, device):
 			logging.warning("Not permitted to operation on this device")
 			server.send_message(client, json.dumps({
 				"id": id,
@@ -186,7 +185,7 @@ def message_received(client, server, message):
 	if code == 'send_command':
 		data = msg['data']
 		device = data.get('device')
-		if not frappe_api.get_device(auth_code, device):
+		if not frappe_api.access_device(auth_code, device):
 			logging.warning("Not permitted to operation on this device")
 			server.send_message(client, json.dumps({
 				"id": id,

@@ -33,9 +33,9 @@ class FrappeApi():
 		# logging.debug('%s\t%s\t%s', str(time.time()), msg)
 		return msg.get("message")
 
-	def get_device(self, auth_code, device_sn):
+	def access_device(self, auth_code, device_sn):
 		session = self.create_get_session(auth_code)
-		r = session.get(self.api_srv + "user_api.get_device?sn=" + device_sn)
+		r = session.get(self.api_srv + "user_api.access_device?sn=" + device_sn)
 		if r.status_code != 200:
 			logging.error(r.text)
 			return None
