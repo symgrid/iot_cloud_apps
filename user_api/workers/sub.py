@@ -157,26 +157,18 @@ class SubClient:
 		self.device_sub_map[device] = sub_map
 
 	def unsubscribe(self, client, device=None):
+		key = client['handler']
 		if device:
 			sub_map = self.device_sub_map.get(device)
-			if not sub_map:
-				return
+			if sub_map and sub_map.get(key):
+				sub_map.pop(key)
 
-			new_map = {}
-			for d in sub_map:
-				if client['handler'] != d:
-					new_map[d] = sub_map[d]
-			self.device_sub_map[device] = new_map
 			return
 
 		for device in self.device_sub_map:
 			sub_map = self.device_sub_map.get(device)
-			new_map = {}
-			for d in sub_map:
-				if client['handler'] != d:
-					new_map[d] = sub_map[d]
-			self.device_sub_map[device] = new_map
-			return
+			if sub_map and sub_map.get(key):
+				sub_map.pop(key)
 
 	def start(self):
 		host = self.config.get('mqtt', 'host', fallback='127.0.0.1')
