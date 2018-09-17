@@ -174,7 +174,7 @@ class SubClient:
 		host = self.config.get('mqtt', 'host', fallback='127.0.0.1')
 		port = self.config.getint('mqtt', 'port', fallback=1883)
 		keepalive = self.config.getint('mqtt', 'keepalive', fallback=60)
-		clientid = self.config.get('mqtt', 'clientid', fallback="IOT_CLOUD_APPS.USER_API.SUB")
+		clientid = self.config.get('mqtt', 'clientid_base', fallback="IOT_CLOUD_APPS") + ".USER_API.SUB"
 		user = self.config.get('mqtt', 'user', fallback="root")
 		password = self.config.get('mqtt', 'password', fallback="bXF0dF9pb3RfYWRtaW4K")
 		mqttc = MQTTClient(self, host=host, port=port, keepalive=keepalive, clientid=clientid, user=user, password=password)
