@@ -1,9 +1,5 @@
 
 from __future__ import unicode_literals
-import re
-import os
-import sys
-import time
 import redis
 import logging
 from apscheduler.schedulers.blocking import BlockingScheduler
@@ -12,6 +8,7 @@ from configparser import ConfigParser
 from tsdb.worker import Worker as TSDBWorker
 from statistics.worker import Worker as StatisticsWorker
 from utils import _dict
+from utils.cloud_query import Query as CloudQuery
 
 
 logging.basicConfig(level=logging.DEBUG,
@@ -23,13 +20,15 @@ config.read('../config.ini')
 
 redis_srv = config.get('redis', 'url', fallback='redis://127.0.0.1:6379')
 api_srv = config.get('iot', 'url', fallback='http://127.0.0.1:8000') + "/api/method/iot.user_api"
+cloud_srv = config.get('iot', 'url', fallback='http://127.0.0.1:8000') + "/api/method/cloud.api"
+auth_code = config.get('iot', 'auth_code', fallback='1234567890')
 
 
 redis_sts = redis.Redis.from_url(redis_srv + "/9", decode_responses=True) # device status (online or offline)
-redis_cloud = redis.Redis.from_url(redis_srv + "/14", decode_responses=True) # Cloud configuration
-redis_statistics = redis.Redis.from_url(redis_srv + "/15", decode_responses=True) # Cloud configuration
+redis_statistics = redis.Redis.from_url(redis_srv + "/15", decode_responses=True) # Cloud statistics result
 
 
+cloud_query = CloudQuery(cloud_srv, auth_code)
 statistics_workers = {}
 tsdb_worker = {}
 cloud_statistics = []
@@ -71,14 +70,11 @@ def create_statistics_worker(company):
 def watch_redis_cloud():
 	logging.debug("Query redis cloud settings from redis!!!!")
 	cloud_statistics = []
-	keys = redis_cloud.keys('*')
-	for key in keys:
-		value = redis_cloud.hgetall(key)
-		if not value:
-			continue
-		value = _dict(value)
-		if value.enable is not None and (value.enable is True or int(value.enable) != 0):
-			cloud_statistics.append(value)
+	companines = cloud_query.list_companies()
+	for comp in companines:
+		comp = _dict(comp)
+		if comp.enable is not None and (comp.enable is True or int(comp.enable) != 0):
+			cloud_statistics.append(comp)
 
 	for value in cloud_statistics:
 		worker = create_statistics_worker(value.company)
