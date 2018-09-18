@@ -179,13 +179,17 @@ class SubClient:
 
 			return
 
+		device_to_pop = []
 		for device in self.device_sub_map:
 			sub_map = self.device_sub_map.get(device)
 			if sub_map and sub_map.get(key):
 				sub_map.pop(key)
 				if len(sub_map.keys()) == 0:
-					self.device_sub_map.pop(device)
-					self.mqttc.unsubscribe(device)
+					device_to_pop.append(device)
+
+		for dev in device_to_pop:
+			self.device_sub_map.pop(dev)
+			self.mqttc.unsubscribe(dev)
 
 	def start(self):
 		host = self.config.get('mqtt', 'host', fallback='127.0.0.1')
