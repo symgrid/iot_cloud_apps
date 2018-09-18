@@ -1,5 +1,5 @@
 '''
-Publish/Subscribe message broker between Redis and MQTT
+MQTT Message subscribuer
 '''
 import threading
 import json
@@ -15,15 +15,11 @@ match_data_path = re.compile(r'^([^/]+)/(.+)$')
 
 redis_result_expire = 60 * 60 * 24 # in seconds  (24 hours)
 
+topics = ["data", "data_gz", "devices", "devices_gz", "status", "event"]
+
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
 	logging.info("Sub MQTT Connected with result code "+str(rc))
-	client.subscribe("+/data")
-	client.subscribe("+/data_gz")
-	client.subscribe("+/devices")
-	client.subscribe("+/devices_gz")
-	client.subscribe("+/status")
-	client.subscribe("+/event")
 
 
 def on_disconnect(client, userdata, rc):
@@ -142,6 +138,14 @@ class MQTTClient(threading.Thread):
 	def publish(self, *args, **kwargs):
 		return self.mqttc.publish(*args, **kwargs)
 
+	def subscribe(self, device):
+		for topic in topics:
+			self.mqttc.subscribe(device + "/" + topic)
+
+	def unsubscribe(self, device):
+		for topic in topics:
+			self.mqttc.unsubscribe(device + "/" + topic)
+
 
 class SubClient:
 	def __init__(self, config, ws_server):
@@ -152,8 +156,13 @@ class SubClient:
 		self.invalid_client = []
 
 	def subscribe(self, client, device):
-		sub_map = self.device_sub_map.get(device) or {}
-		sub_map[client['handler']] = client
+		key = client['handler']
+		sub_map = self.device_sub_map.get(device)
+		if not sub_map:
+			sub_map = {}
+			self.mqttc.subscribe(device)
+
+		sub_map[key] = client
 		self.device_sub_map[device] = sub_map
 
 	def unsubscribe(self, client, device=None):
@@ -162,6 +171,9 @@ class SubClient:
 			sub_map = self.device_sub_map.get(device)
 			if sub_map and sub_map.get(key):
 				sub_map.pop(key)
+				if len(sub_map.keys()) == 0:
+					self.device_sub_map.pop(device)
+					self.mqttc.unsubscribe(device)
 
 			return
 
@@ -169,6 +181,9 @@ class SubClient:
 			sub_map = self.device_sub_map.get(device)
 			if sub_map and sub_map.get(key):
 				sub_map.pop(key)
+				if len(sub_map.keys()) == 0:
+					self.device_sub_map.pop(device)
+					self.mqttc.unsubscribe(device)
 
 	def start(self):
 		host = self.config.get('mqtt', 'host', fallback='127.0.0.1')
