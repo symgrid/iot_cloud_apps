@@ -24,7 +24,7 @@ def device():
 
 	auth_code = request.headers.get('AuthorizationCode')
 	data = _dict(json.loads(request.data))
-	logging.warning("Received device %s %s", auth_code, request.data)
+	logging.debug("Received device %s %s", auth_code, request.data)
 
 	return "OK!"
 
@@ -37,7 +37,7 @@ def device_status():
 
 	auth_code = request.headers.get('AuthorizationCode')
 	data = _dict(json.loads(request.data))
-	logging.warning("Received device status %s %s %s %s", auth_code, data.sn, data.status, data.time)
+	logging.debug("Received device status %s %s %s %s", auth_code, data.sn, data.status, data.time)
 
 	return "OK!"
 
@@ -50,7 +50,7 @@ def device_event():
 
 	auth_code = request.headers.get('AuthorizationCode')
 	data = _dict(json.loads(request.data))
-	logging.warning("Received device event %s %s", auth_code, request.data)
+	logging.debug("Received device event %s %s", auth_code, request.data)
 
 	return "OK!"
 
