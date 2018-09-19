@@ -4,7 +4,7 @@ import logging
 import json
 
 
-class FrappeApi():
+class UserApi():
 	def __init__(self, config):
 		self.thread_stop = False
 		self.api_srv = config.get('iot', 'url', fallback='http://127.0.0.1:8000') + "/api/method/iot."

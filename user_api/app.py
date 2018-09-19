@@ -8,8 +8,8 @@ from websocket_server import WebsocketServer
 
 from workers.sub import SubClient
 from workers.action import Worker as ActionWorker
-from rtdata import RTData
-from utils.frappe_api import FrappeApi
+from utils.rtdata import RTData
+from utils.user_api import UserApi
 
 
 logging.basicConfig(level=logging.DEBUG,
@@ -31,7 +31,7 @@ client_auth_map = {}
 
 
 rtdata = RTData(redis_cfg, redis_rtdb)
-frappe_api = FrappeApi(config)
+frappe_api = UserApi(config)
 server = WebsocketServer(port=17654, host='0.0.0.0', loglevel=logging.INFO)
 sub = SubClient(config, server)
 action_worker = ActionWorker()

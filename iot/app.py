@@ -8,7 +8,7 @@ from configparser import ConfigParser
 from tsdb.worker import Worker as TSDBWorker
 from statistics.worker import Worker as StatisticsWorker
 from utils import _dict
-from utils.cloud_query import Query as CloudQuery
+from utils.cloud_api import CloudApi as CloudApi
 
 
 logging.basicConfig(level=logging.DEBUG,
@@ -28,7 +28,7 @@ redis_sts = redis.Redis.from_url(redis_srv + "/9", decode_responses=True) # devi
 redis_statistics = redis.Redis.from_url(redis_srv + "/15", decode_responses=True) # Cloud statistics result
 
 
-cloud_query = CloudQuery(cloud_srv, auth_code)
+cloud_api = CloudApi(cloud_srv, auth_code)
 statistics_workers = {}
 tsdb_worker = {}
 cloud_statistics = []
@@ -70,7 +70,7 @@ def create_statistics_worker(company):
 def watch_redis_cloud():
 	logging.debug("Query redis cloud settings from redis!!!!")
 	cloud_statistics = []
-	companines = cloud_query.list_companies()
+	companines = cloud_api.list_companies()
 	for comp in companines:
 		comp = _dict(comp)
 		if comp.enable is not None and (comp.enable is True or int(comp.enable) != 0):
