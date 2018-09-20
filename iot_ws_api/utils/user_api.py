@@ -6,7 +6,6 @@ import json
 
 class UserApi():
 	def __init__(self, config):
-		self.thread_stop = False
 		self.api_srv = config.get('iot', 'url', fallback='http://127.0.0.1:8000') + "/api/method/iot."
 
 	def create_get_session(self, auth_code):

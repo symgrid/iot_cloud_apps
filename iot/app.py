@@ -21,14 +21,14 @@ config.read('../config.ini')
 redis_srv = config.get('redis', 'url', fallback='redis://127.0.0.1:6379')
 api_srv = config.get('iot', 'url', fallback='http://127.0.0.1:8000') + "/api/method/iot.user_api"
 cloud_srv = config.get('iot', 'url', fallback='http://127.0.0.1:8000') + "/api/method/cloud.api"
-auth_code = config.get('iot', 'auth_code', fallback='1234567890')
+cloud_auth_code = config.get('iot', 'auth_code', fallback='1234567890')
 
 
 redis_sts = redis.Redis.from_url(redis_srv + "/9", decode_responses=True) # device status (online or offline)
 redis_statistics = redis.Redis.from_url(redis_srv + "/15", decode_responses=True) # Cloud statistics result
 
 
-cloud_api = CloudApi(cloud_srv, auth_code)
+cloud_api = CloudApi(cloud_srv, cloud_auth_code)
 statistics_workers = {}
 tsdb_worker = {}
 cloud_statistics = []
