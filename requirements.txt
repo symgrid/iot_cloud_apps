@@ -2,4 +2,3 @@ redis
 influxdb
 paho-mqtt
 apscheduler
-flask
