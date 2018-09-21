@@ -37,10 +37,10 @@ class AppMgr(threading.Thread):
 		for app in applist:
 			app = _dict(app)
 			if app.device_data == 1 and app.device_data_mqtt_host:
-				user = app.device_data_mqtt_username
+				user = app.device_data_mqtt_user
 				if user and len(user) == 0:
 					user = None
-				password = app.device_data_mqtt_password
+				password = app.device_data_mqtt_passwd
 				if password and len(password) == 0:
 					password = None
 				apps[app.name] = _dict({
