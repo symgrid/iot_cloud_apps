@@ -20,8 +20,7 @@ match_data_path = re.compile(r'^([^/]+)/(.+)$')
 
 redis_result_expire = 60 * 60 * 24 # in seconds  (24 hours)
 
-# topics = ["data", "data_gz", "devices", "devices_gz", "status", "event"]
-topics = ["data", "data_gz", "devices", "devices_gz"]
+topics = ["data", "data_gz", "devices", "devices_gz", "status", "event"]
 
 
 # The callback for when the client receives a CONNACK response from the server.
