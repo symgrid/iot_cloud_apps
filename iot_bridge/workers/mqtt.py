@@ -58,13 +58,14 @@ class MQTTClient(threading.Thread):
 			mqttc = mqtt.Client(userdata=self, client_id=self.clientid)
 			if self.user:
 				mqttc.username_pw_set(self.user, self.password)
+
 			self.mqttc = mqttc
 
 			mqttc.on_connect = on_connect
 			mqttc.on_disconnect = on_disconnect
 			mqttc.on_message = on_message
 
-			logging.debug('MQTT Connect to %s:%d', self.host, self.port)
+			logging.debug('MQTT Connect to %s:%d cid: %s user: %s passwd: %s', self.host, self.port, self.clientid, self.user or "", self.password or "")
 			mqttc.connect_async(self.host, self.port, self.keepalive)
 
 			mqttc.loop_forever(retry_first_connection=True)
