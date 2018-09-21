@@ -86,12 +86,12 @@ class MQTTClient(threading.Thread):
 		return self.mqttc.publish(*args, **kwargs)
 
 	def subscribe(self, device):
-		logging.info('Subscribe device', device)
+		logging.info('Subscribe device %s', device)
 		for topic in topics:
 			self.mqttc.subscribe(device + "/" + topic)
 
 	def unsubscribe(self, device):
-		logging.info('Unsubscribe device', device)
+		logging.info('Unsubscribe device %s', device)
 		for topic in topics:
 			self.mqttc.unsubscribe(device + "/" + topic)
 
@@ -184,8 +184,18 @@ class MQTTBridge(threading.Thread):
 		self.id = 0
 		self.devices = set()
 
+	def list_devices(self):
+		devices = _dict(self.user_api.list_devices())
+		results = set(devices.private_devices)
+		for g in devices.shared_devices:
+			results = results.union(set(_dict(g).devices))
+		for g in devices.company_devices:
+			results = results.union(set(_dict(g).devices))
+		return results
+
+
 	def update_devices(self):
-		devices = self.user_api.list_devices()
+		devices = self.list_devices()
 		to_be_remove = self.devices.difference(devices)
 		for device in to_be_remove:
 			self.mqttc.unsubscribe(device)
@@ -193,7 +203,7 @@ class MQTTBridge(threading.Thread):
 		self.devices.difference_update(to_be_remove)
 
 		to_be_add = devices.difference(self.devices)
-		for device in to_be_remove:
+		for device in to_be_add:
 			self.mqttc.subscribe(device)
 
 		self.devices.update(to_be_add)
@@ -216,6 +226,8 @@ class MQTTBridge(threading.Thread):
 		mqtt_bridge.start()
 		self.mqtt_bridge = mqtt_bridge
 
+		threading.Thread.start(self)
+
 	def stop(self):
 		self.mqttc.stop()
 		self.mqtt_bridge.stop()
@@ -225,7 +237,7 @@ class MQTTBridge(threading.Thread):
 		try:
 			while not self.thread_stop:
 				self.update_devices()
-				time.sleep(5)
+				time.sleep(60)
 		except Exception as ex:
 			logging.exception(ex)
 			os._exit(1)

@@ -139,12 +139,12 @@ class MQTTClient(threading.Thread):
 		return self.mqttc.publish(*args, **kwargs)
 
 	def subscribe(self, device):
-		logging.info('Subscribe device', device)
+		logging.info('Subscribe device %s', device)
 		for topic in topics:
 			self.mqttc.subscribe(device + "/" + topic)
 
 	def unsubscribe(self, device):
-		logging.info('Unsubscribe device', device)
+		logging.info('Unsubscribe device %s', device)
 		for topic in topics:
 			self.mqttc.unsubscribe(device + "/" + topic)
 

@@ -26,7 +26,7 @@ class AppMgr(threading.Thread):
 		try:
 			while not self.thread_stop:
 				self.update_apps()
-				time.sleep(5)
+				time.sleep(60)
 		except Exception as ex:
 			logging.exception(ex)
 			os._exit(1)
