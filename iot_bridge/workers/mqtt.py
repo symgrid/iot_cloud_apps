@@ -221,8 +221,15 @@ class MQTTBridge(threading.Thread):
 		self.mqttc = mqttc
 
 		remote = _dict(self.remote)
+		bridge_host = remote.host
+		bridge_port = 1883
+		bridge_clientid = 'THINGSROOT_MQTT_BRIDGE'
 		uri = urlparse(remote.host)
-		mqtt_bridge = MQTTClient(host=uri.hostname, port=uri.port or 1883, clientid=uri.username, user=remote.user, password=remote.password)
+		if uri:
+			bridge_host = uri.hostname
+			bridge_port = uri.port or 1883
+			bridge_clientid = uri.username
+		mqtt_bridge = MQTTClient(host=bridge_host, port=bridge_port, clientid=bridge_clientid, user=remote.user, password=remote.password)
 		mqtt_bridge.start()
 		self.mqtt_bridge = mqtt_bridge
 
