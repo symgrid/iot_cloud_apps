@@ -65,8 +65,8 @@ def create_statistics_worker(company):
 	return worker
 
 
-def watch_redis_cloud():
-	logging.debug("Query redis cloud settings from redis!!!!")
+def run_statistics_tasks():
+	logging.debug("run_statistics_tasks")
 	cloud_statistics = []
 	companines = cloud_api.list_companies()
 	for comp in companines:
@@ -75,6 +75,7 @@ def watch_redis_cloud():
 			cloud_statistics.append(comp)
 
 	for value in cloud_statistics:
+		logging.debug("run_statistics_tasks for company %s", value.company)
 		worker = create_statistics_worker(value.company)
 		tsdb = create_tsdb_worker(value.database)
 		# worker.create_dss_task(tsdb, redis_sts, api_srv, val.company, val.auth_code)
@@ -84,12 +85,12 @@ def watch_redis_cloud():
 		worker.create_dscs_task(tsdb, create_tsdb_client(value.database), api_srv, value.company, value.auth_code)
 
 
-watch_redis_cloud()
+run_statistics_tasks()
 
 scheduler = BlockingScheduler()
 
 five_min = CronTrigger(minute='0/5')
-scheduler.add_job(watch_redis_cloud, five_min, name="Watch Redis Cloud")
+scheduler.add_job(run_statistics_tasks, five_min, name="IOT Run Statistics Tasks")
 
 scheduler.start()
 
