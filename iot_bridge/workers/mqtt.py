@@ -222,26 +222,25 @@ class MQTTBridge(threading.Thread):
 
 		remote = _dict(self.remote)
 		uri = urlparse(remote.host)
-		mqtt_bridge = MQTTClient(host=uri.hostname, port=uri.port, clientid=uri.username, user=remote.user, password=remote.password)
+		mqtt_bridge = MQTTClient(host=uri.hostname, port=uri.port or 1883, clientid=uri.username, user=remote.user, password=remote.password)
 		mqtt_bridge.start()
 		self.mqtt_bridge = mqtt_bridge
 
 		threading.Thread.start(self)
 
 	def stop(self):
+		self.thread_stop = True
 		self.mqttc.stop()
 		self.mqtt_bridge.stop()
+		self.join()
 
 	def run(self):
-
 		try:
 			while not self.thread_stop:
 				self.update_devices()
 				time.sleep(60)
 		except Exception as ex:
 			logging.exception(ex)
-			os._exit(1)
-
 
 	def on_data(self, gate, sn, input, data):
 		self.mqtt_bridge.publish(topic=sn+'/data', payload=json.dumps({
