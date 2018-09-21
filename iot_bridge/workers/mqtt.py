@@ -259,17 +259,17 @@ class MQTTBridge(threading.Thread):
 			"gate": gate,
 			"device": sn,
 			"info": info
-		}))
+		}), qos=1, retain=True)
 
 	def on_device_status(self, gate, status):
 		self.mqtt_bridge.publish(topic=gate+'/status', payload=json.dumps({
 			"gate": gate,
 			"status": status
-		}))
+		}), qos=1, retain=True)
 
 	def on_device_event(self, gate, event):
 		self.mqtt_bridge.publish(topic=gate+'/event', payload=json.dumps({
 			"gate": gate,
 			"event": event
-		}))
+		}), qos=1)
 
