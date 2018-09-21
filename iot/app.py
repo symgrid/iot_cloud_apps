@@ -30,7 +30,6 @@ redis_statistics = redis.Redis.from_url(redis_srv + "/15", decode_responses=True
 cloud_api = CloudApi(api_srv, auth_code)
 statistics_workers = {}
 tsdb_worker = {}
-cloud_statistics = []
 
 
 def create_tsdb_worker(db):
