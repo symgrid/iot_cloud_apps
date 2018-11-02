@@ -76,7 +76,7 @@ class Client:
 
 	def query_event_count(self, iot, startime, endtime, group_by):
 		time_cond = 'time >= \'' + startime + '\' AND time < \'' + endtime +'\''
-		dev_cond = '"iot"=\'' + iot + '\' AND "device"=\'' + iot + '\''
+		dev_cond = '"iot"=\'' + iot + '\''
 		group_by = 'GROUP BY time(' + group_by + ') FILL(null)'
 		query = 'select count("event") from iot_device_event where ' + dev_cond + ' AND ' + time_cond + ' ' + group_by
 		query = query + ' tz(\'' + tzlocal.get_localzone().zone + '\')'
