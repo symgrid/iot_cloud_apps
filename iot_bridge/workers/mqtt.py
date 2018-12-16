@@ -49,8 +49,10 @@ class MQTTClient(threading.Thread):
 		self.user = user
 		self.password = password
 		self.keepalive = keepalive
+		self.sub_devs = set()
 
 	def stop(self):
+		self.sub_devs = set()
 		self.mqttc.disconnect()
 
 	def run(self):
@@ -75,6 +77,9 @@ class MQTTClient(threading.Thread):
 
 	def on_connect(self, client, flags, rc):
 		logging.info("MQTT %s connected return %d", self.host, rc)
+		for device in self.sub_devs:
+			for topic in topics:
+				self.mqttc.subscribe(device + "/" + topic)
 
 	def on_disconnect(self, client, rc):
 		logging.info("MQTT %s disconnect return %d", self.host, rc)
@@ -87,11 +92,13 @@ class MQTTClient(threading.Thread):
 
 	def subscribe(self, device):
 		logging.info('Subscribe device %s', device)
+		self.sub_devs.add(device)
 		for topic in topics:
 			self.mqttc.subscribe(device + "/" + topic)
 
 	def unsubscribe(self, device):
 		logging.info('Unsubscribe device %s', device)
+		self.sub_devs.remove(device)
 		for topic in topics:
 			self.mqttc.unsubscribe(device + "/" + topic)
 
