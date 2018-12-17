@@ -55,7 +55,12 @@ class AppMgr(threading.Thread):
 
 	def update_apps(self):
 		logging.info("=== Update MQTT bridge list ===")
-		apps = self.list_mqtt_apps()
+		apps = None
+		try:
+			apps = self.list_mqtt_apps()
+		except Exception as ex:
+			logging.exception(ex)
+
 		new_apps_set = set(apps.keys())
 		cur_apps_set = set(self.apps.keys())
 
