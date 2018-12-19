@@ -60,7 +60,11 @@ class AppMgr(threading.Thread):
 			apps = self.list_mqtt_apps()
 		except Exception as ex:
 			logging.exception(ex)
-			return # Skip update for now
+			apps = None
+
+		if apps is None:
+			# Skip update for now
+			return
 
 		new_apps_set = set(apps.keys())
 		cur_apps_set = set(self.apps.keys())
