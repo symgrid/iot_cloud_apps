@@ -1,5 +1,6 @@
 
 from __future__ import unicode_literals
+import sys
 import redis
 import logging
 import json
@@ -12,9 +13,15 @@ from utils.rtdata import RTData
 from utils.user_api import UserApi
 
 
-logging.basicConfig(level=logging.DEBUG,
-					format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
-					datefmt='%a, %d %b %Y %H:%M:%S')
+console_out = logging.StreamHandler(sys.stdout)
+console_out.setLevel(logging.DEBUG)
+console_err = logging.StreamHandler(sys.stderr)
+console_err.setLevel(logging.ERROR)
+logging_handlers = [console_out, console_err]
+logging_format = '%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s'
+logging_datefmt = '%a, %d %b %Y %H:%M:%S'
+logging.basicConfig(level=logging.DEBUG, format=logging_format, datefmt=logging_datefmt, handlers=logging_handlers)
+
 
 config = ConfigParser()
 config.read('../config.ini')
@@ -35,6 +42,7 @@ frappe_api = UserApi(config)
 server = WebsocketServer(port=17654, host='0.0.0.0', loglevel=logging.INFO)
 sub = SubClient(config, server)
 action_worker = ActionWorker()
+
 
 def new_client(client, server):
 	server.send_message(client, json.dumps({
