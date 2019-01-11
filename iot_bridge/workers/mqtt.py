@@ -77,6 +77,11 @@ class MQTTClient(threading.Thread):
 
 	def on_connect(self, client, flags, rc):
 		logging.info("MQTT %s connected return %d", self.host, rc)
+
+		if rc != 0:
+			return
+
+		logging.info("MQTT %s MQTT Subscribe topics", self.host)
 		for device in self.sub_devs:
 			for topic in topics:
 				self.mqttc.subscribe(device + "/" + topic)
