@@ -228,6 +228,7 @@ class DeviceTypeStatistics(TaskBase):
 		company_devices = msg.message.get('company_devices')
 
 		q102_count = 0
+		q204_count = 0
 		vm_count = 0
 
 		for group in company_devices:
@@ -235,10 +236,12 @@ class DeviceTypeStatistics(TaskBase):
 			for dev in group.devices:
 				if dev[0:8] == '2-30002-':
 					q102_count = q102_count + 1
+				elif dev[0:8] == '2-30102-':
+					q204_count = q204_count + 1
 				else:
 					vm_count = vm_count + 1
 
-		self.redis_statistics.hmset('device_type.' + self.owner, {"Q102": q102_count, "VBOX": vm_count})
+		self.redis_statistics.hmset('device_type.' + self.owner, {"Q102": q102_count, "Q204": q204_count, "VBOX": vm_count})
 
 
 class DeviceStatusChangeStatistics(TaskBase):
