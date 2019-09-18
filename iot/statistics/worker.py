@@ -229,6 +229,7 @@ class DeviceTypeStatistics(TaskBase):
 
 		q102_count = 0
 		q204_count = 0
+		t1_3000_count = 0
 		vm_count = 0
 
 		for group in company_devices:
@@ -238,10 +239,18 @@ class DeviceTypeStatistics(TaskBase):
 					q102_count = q102_count + 1
 				elif dev[0:8] == '2-30102-':
 					q204_count = q204_count + 1
+				elif dev[0:6] == 'TRTX01':
+					t1_3000_count = t1_3000_count + 1
 				else:
 					vm_count = vm_count + 1
 
-		self.redis_statistics.hmset('device_type.' + self.owner, {"Q102": q102_count, "Q204": q204_count, "VBOX": vm_count})
+		self.redis_statistics.hmset('device_type.' + self.owner,
+									{
+										"Q102": q102_count,
+										"Q204": q204_count,
+										"T1-3000": t1_3000_count,
+										"VBOX": vm_count
+									})
 
 
 class DeviceStatusChangeStatistics(TaskBase):
