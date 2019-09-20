@@ -27,6 +27,8 @@ def on_connect(client, userdata, flags, rc):
 	client.subscribe("+/data_gz")
 	client.subscribe("+/devices")
 	client.subscribe("+/devices_gz")
+	client.subscribe("+/device")
+	client.subscribe("+/device_gz")
 	client.subscribe("+/status")
 	client.subscribe("+/event")
 
@@ -89,11 +91,37 @@ def on_message_raw(client, userdata, msg):
 		logging.debug('%s/%s\t%s', devid, topic, data)
 		devs = json.loads(data)
 		if not devs:
-			logging.warning('Decode DEVICE_GZ JSON Failure: %s/%s\t%s', devid, topic, data)
+			logging.warning('Decode DEVICES_GZ JSON Failure: %s/%s\t%s', devid, topic, data)
 			return
 
 		for dev in devs:
 			userdata.on_device(dev, devs[dev])
+		return
+
+	if topic == 'device' or topic == 'device_gz':
+		data = msg.payload.decode('utf-8') if topic == 'device' else zlib.decompress(msg.payload).decode('utf-8')
+		logging.debug('%s/%s\t%s', devid, topic, data)
+		dev = json.loads(data)
+		if not dev:
+			logging.warning('Decode DEVICE_GZ JSON Failure: %s/%s\t%s', devid, topic, data)
+			return
+
+
+		action = dev.get('action')
+		dev_sn = dev.get('sn')
+		if not action or not dev_sn:
+			logging.warning('Invalid DEVICE data: %s/%s\t%s', devid, topic, data)
+			return
+
+		if action == 'add':
+			userdata.on_device(dev_sn, dev.get('props'))
+		elif action == 'mod':
+			userdata.on_device(dev_sn, dev.get('props'))
+		elif action == 'del':
+			# TODO: userdata.on_device(dev_sn, {})
+			pass
+		else:
+			logging.warning('Unknown Device Action!!')
 		return
 
 	if topic == 'status':
