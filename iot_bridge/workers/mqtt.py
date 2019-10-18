@@ -125,9 +125,9 @@ class IOTMQTTClient(MQTTClient):
 		topic = g[1]
 
 		if topic == 'data':
-			payload = json.loads(msg.payload.decode('utf-8'))
+			payload = json.loads(msg.payload.decode('utf-8', 'surrogatepass'))
 			if not payload:
-				logging.warning('Decode DATA JSON Failure: %s/%s\t%s', devid, topic, msg.payload.decode('utf-8'))
+				logging.warning('Decode DATA JSON Failure: %s/%s\t%s', devid, topic, msg.payload.decode('utf-8', 'surrogatepass'))
 				return
 			g = match_data_path.match(payload[0])
 			if g and msg.retain == 0:
@@ -141,7 +141,7 @@ class IOTMQTTClient(MQTTClient):
 
 		if topic == 'data_gz':
 			try:
-				payload = zlib.decompress(msg.payload).decode('utf-8')
+				payload = zlib.decompress(msg.payload).decode('utf-8', 'surrogatepass')
 				data_list = json.loads(payload)
 				if not data_list:
 					logging.warning('Decode DATA_GZ JSON Failure: %s/%s\t%s', devid, topic, payload)
@@ -162,7 +162,7 @@ class IOTMQTTClient(MQTTClient):
 			return
 
 		if topic == 'devices' or topic == 'devices_gz':
-			data = msg.payload.decode('utf-8') if topic == 'devices' else zlib.decompress(msg.payload).decode('utf-8')
+			data = msg.payload.decode('utf-8', 'surrogatepass') if topic == 'devices' else zlib.decompress(msg.payload).decode('utf-8', 'surrogatepass')
 			logging.debug('%s/%s\t%s', devid, topic, data)
 			devs = json.loads(data)
 			if not devs:
@@ -174,12 +174,12 @@ class IOTMQTTClient(MQTTClient):
 			return
 
 		if topic == 'status':
-			status = msg.payload.decode('utf-8')
+			status = msg.payload.decode('utf-8', 'surrogatepass')
 			self.subclient.on_device_status(devid, status)
 			return
 
 		if topic == 'event':
-			event = msg.payload.decode('utf-8')
+			event = msg.payload.decode('utf-8', 'surrogatepass')
 			self.subclient.on_device_event(devid, event)
 			return
 
