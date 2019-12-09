@@ -197,13 +197,18 @@ class DeviceEventTypeStatistics(TaskBase):
 			return
 
 		company_devices = msg.message.get('company_devices')
+		logging.debug('Event Type Count Start {0}'.format(self.owner))
 		for group in company_devices:
 			group = _dict(group)
 			for dev in group.devices:
-				val = self.tsdb_client.query_event_type_count(dev, start_time, end_time)
-				logging.debug('Event Type Count', repr(val))
-				if val:
-					self.tsdb_worker.append_statistics('device_event_type_statistics', self.owner, dev, now, val)
+				try:
+					val = self.tsdb_client.query_event_type_count(dev, start_time, end_time)
+					logging.debug('Event Type Count {0}-{1} [{2}]: {3}'.format(start_time, end_time, dev, json.dumps(val)))
+					if val:
+						self.tsdb_worker.append_statistics('device_event_type_statistics', self.owner, dev, now, val)
+				except Exception as ex:
+					logging.exception(ex)
+		logging.debug('Event Type Count End {0}'.format(self.owner))
 
 
 class DeviceTypeStatistics(TaskBase):
