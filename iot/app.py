@@ -76,6 +76,7 @@ def run_statistics_tasks():
 	logging.debug("run_statistics_tasks")
 	cloud_statistics = []
 	companines = cloud_api.list_companies()
+	assert(companines is not None)
 	for comp in companines:
 		comp = _dict(comp)
 		if comp.enable is not None and (comp.enable is True or int(comp.enable) != 0):

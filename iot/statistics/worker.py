@@ -201,6 +201,7 @@ class DeviceEventTypeStatistics(TaskBase):
 			group = _dict(group)
 			for dev in group.devices:
 				val = self.tsdb_client.query_event_type_count(dev, start_time, end_time)
+				logging.debug('Event Type Count', repr(val))
 				if val:
 					self.tsdb_worker.append_statistics('device_event_type_statistics', self.owner, dev, now, val)
 
