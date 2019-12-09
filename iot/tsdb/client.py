@@ -110,7 +110,7 @@ class Client:
 			for p in val.get_points('iot_device_event'):
 				data = json.loads(p.get('event'))
 				event_type = data.get('type')
-				if event_type and len(event_type) > 0:
+				if event_type and len(str(event_type)) > 0:
 					v = value.get(data.get('type')) or 0
 					v = v + 1
 					value[data.get('type')] = v
