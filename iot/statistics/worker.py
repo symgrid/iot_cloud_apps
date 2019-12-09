@@ -208,7 +208,7 @@ class DeviceEventTypeStatistics(TaskBase):
 					if val:
 						self.tsdb_worker.append_statistics('single_device_event_type_statistics', self.owner, dev, now, val)
 						for k in val:
-							total[k] = (total[k] or 0) + val[k]
+							total[k] = (total.get(k) or 0) + val[k]
 				except Exception as ex:
 					logging.exception(ex)
 		logging.debug('Event Type Count End {0}: {1}'.format(self.owner, json.dumps(total)))
