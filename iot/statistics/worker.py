@@ -28,7 +28,6 @@ class TaskBase:
 		return session
 
 
-
 class Worker(threading.Thread):
 	def __init__(self):
 		threading.Thread.__init__(self)
@@ -115,11 +114,10 @@ class DeviceStatusStatistics(TaskBase):
 						online_count = online_count + 1
 					else:
 						offline_count = offline_count + 1
-		self.tsdb_worker.append_statistics('device_status_statistics', self.owner, now, {
+		self.tsdb_worker.append_statistics('device_status_statistics', self.owner, None, now, {
 			'online': online_count,
 			'offline': offline_count
 		})
-
 
 
 DATE_FORMAT = "%Y-%m-%d"
@@ -156,6 +154,9 @@ class DeviceEventStatistics(TaskBase):
 		for group in company_devices:
 			group = _dict(group)
 			for dev in group.devices:
+				'''
+				query one week event counts, and then got the total count and today's
+				'''
 				val = self.tsdb_client.query_event_count(dev, start_time, end_time, '1d')
 				data = {
 					'points': val,
@@ -201,7 +202,7 @@ class DeviceEventTypeStatistics(TaskBase):
 			for dev in group.devices:
 				val = self.tsdb_client.query_event_type_count(dev, start_time, end_time)
 				if val:
-					self.tsdb_worker.append_statistics('device_event_type_statistics', self.owner, now, val)
+					self.tsdb_worker.append_statistics('device_event_type_statistics', self.owner, dev, now, val)
 
 
 class DeviceTypeStatistics(TaskBase):
@@ -292,7 +293,7 @@ class DeviceStatusChangeStatistics(TaskBase):
 					else:
 						offline_count = offline_count + 1
 		# TODO: using end time or start time
-		self.tsdb_worker.append_statistics('device_status_statistics', self.owner, now, {
+		self.tsdb_worker.append_statistics('device_status_statistics', self.owner, None, now, {
 			'online': online_count,
 			'offline': offline_count
 		})

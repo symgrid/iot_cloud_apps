@@ -40,11 +40,16 @@ class Client:
 					}
 				})
 			elif data.get('statistics') is True:
+				tags = {
+					"owner": data['owner']
+				}
+				if data.get('iot') is not None:
+					tags.update({
+						"iot": data['iot']
+					})
 				points.append({
 					"measurement": data['name'],
-					"tags": {
-						"owner": data['owner'],
-					},
+					"tags": tags,
 					"time": int(data['timestamp'] * 1000),
 					"fields": data['fields']
 				})

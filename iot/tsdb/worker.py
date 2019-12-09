@@ -16,7 +16,6 @@ class Worker(threading.Thread):
 		self.data_queue = queue.Queue(10240)
 		self.task_queue = queue.Queue(1024)
 
-
 	def run(self):
 		dq = self.data_queue
 		tq = self.task_queue
@@ -71,11 +70,12 @@ class Worker(threading.Thread):
 			"type": event.get('type'),
 		})
 
-	def append_statistics(self, name, owner, timestamp, fields):
+	def append_statistics(self, name, owner, iot, timestamp, fields):
 		self.data_queue.put({
 			'statistics': True,
 			"name": name,
 			"owner": owner,
+			"iot": iot,
 			"timestamp": timestamp,
 			"fields": fields,
 		})
