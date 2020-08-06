@@ -27,15 +27,19 @@ class CloudApi:
 	def list_companies(self):
 		session = self.create_get_session()
 
-		r = session.get(self.api_srv + ".list_statistics_companies")
-		if r.status_code != 200:
-			logging.warning(r.text)
-			return
+		try:
+			r = session.get(self.api_srv + ".list_statistics_companies")
+			if r.status_code != 200:
+				logging.warning(r.text)
+				return
 
-		msg = _dict(r.json())
-		if not msg or not msg.message:
-			logging.warning('Result is not json!!')
-			return
+			msg = _dict(r.json())
+			if not msg or not msg.message:
+				logging.warning('Result is not json!!')
+				return
 
-		return msg.message
+			return msg.message
+		except Exception as ex:
+			logging.exception(ex)
+			return
 
